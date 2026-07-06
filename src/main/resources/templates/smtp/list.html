@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, 'SMTP Accounts Settings')}">
+<body>
+    <div class="content-body fade-in">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <p class="text-secondary mb-0">Configure Gmail, Outlook, Zoho, or Custom SMTP accounts</p>
+            </div>
+            <a th:href="@{/smtp/new}" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-plus me-2"></i>Add SMTP Account</a>
+        </div>
+
+        <!-- SMTP List -->
+        <div class="row g-4">
+            <div class="col-md-6" th:each="account : ${accounts}">
+                <div class="card glass-card p-4 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-primary" th:text="${account.name}">Primary Gmail</h5>
+                                <span class="text-secondary fs-8" th:text="${account.host} + ':' + ${account.port}">smtp.gmail.com:587</span>
+                            </div>
+                            <span class="badge rounded-pill" 
+                                  th:classappend="${account.active ? 'badge-sent' : 'badge-draft'}" 
+                                  th:text="${account.active ? 'ACTIVE' : 'INACTIVE'}">Active</span>
+                        </div>
+
+                        <div class="list-group list-group-flush fs-7 mb-4">
+                            <div class="list-group-item bg-transparent px-0 py-2">
+                                <strong>Username:</strong> <span th:text="${account.username}">user@domain.com</span>
+                            </div>
+                            <div class="list-group-item bg-transparent px-0 py-2">
+                                <strong>Sender Address:</strong> <span th:text="${account.email}">user@domain.com</span>
+                            </div>
+                            <div class="list-group-item bg-transparent px-0 py-2">
+                                <strong>Encryption:</strong> 
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary me-1" th:if="${account.tls}">STARTTLS</span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary" th:if="${account.ssl}">SSL/TLS</span>
+                                <span class="badge bg-light text-secondary" th:if="${!account.tls && !account.ssl}">None</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-3 border-secondary border-opacity-10 d-flex justify-content-between">
+                        <!-- Quick validation indicators -->
+                        <span class="fs-8 text-secondary align-self-center"><i class="fa-solid fa-shield-halved me-1 text-success"></i> Encrypted Credentials</span>
+                        <div class="btn-group">
+                            <a th:href="@{/smtp/edit/{id}(id=${account.id})}" class="btn btn-outline-secondary btn-sm" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
+                            <a th:href="@{/smtp/delete/{id}(id=${account.id})}" class="btn btn-outline-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this SMTP Account?');"><i class="fa-solid fa-trash"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="col-12" th:if="${#lists.isEmpty(accounts)}">
+                <div class="card glass-card p-5 text-center">
+                    <i class="fa-solid fa-server fa-4x mb-3 text-secondary border-secondary opacity-50"></i>
+                    <h5 class="fw-bold">No SMTP Accounts Configured</h5>
+                    <p class="text-secondary">Before launching outreach, you must register at least one working SMTP server.</p>
+                    <div class="d-flex justify-content-center mt-3">
+                        <a th:href="@{/smtp/new}" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-plus me-2"></i>Add SMTP Account</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

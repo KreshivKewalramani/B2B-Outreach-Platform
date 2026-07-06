@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, 'Profile Settings')}">
+<body>
+    <div class="content-body fade-in">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card glass-card p-4">
+                    <h5 class="card-title fw-bold mb-4 text-primary"><i class="fa-solid fa-lock me-2"></i>Change Password</h5>
+                    <form th:action="@{/profile/change-password}" method="post">
+                        <div class="mb-3">
+                            <label for="oldPassword" class="form-label fw-medium">Old Password</label>
+                            <input type="password" class="form-control" id="oldPassword" name="oldPassword" placeholder="Enter old password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label fw-medium">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="Enter new password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-save me-2"></i>Update Password</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-6 mt-4 mt-md-0">
+                <div class="card glass-card p-4">
+                    <h5 class="card-title fw-bold mb-4 text-primary"><i class="fa-solid fa-info-circle me-2"></i>Account Details</h5>
+                    <p class="mb-2"><strong>Username:</strong> <span th:text="${username}">username</span></p>
+                    <p class="mb-0"><strong>Role:</strong> <span class="badge bg-primary">Authenticated User</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

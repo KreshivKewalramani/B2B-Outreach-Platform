@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, 'Outreach Analytics and Reports')}">
+<body>
+    <div class="content-body fade-in">
+        <!-- Toolbar with download options -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <p class="text-secondary mb-0">View sending history logs and export performance summaries</p>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-secondary-grad dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-download me-2"></i>Export Logs
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                    <li><a class="dropdown-item" th:href="@{/reports/export/excel}"><i class="fa-solid fa-file-excel text-success me-2"></i>Export to Excel (.xlsx)</a></li>
+                    <li><a class="dropdown-item" th:href="@{/reports/export/csv}"><i class="fa-solid fa-file-csv text-info me-2"></i>Export to CSV (.csv)</a></li>
+                    <li><a class="dropdown-item" th:href="@{/reports/export/pdf}"><i class="fa-solid fa-file-pdf text-danger me-2"></i>Export to PDF (.pdf)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Summary Grid -->
+        <div class="row g-4 mb-4 text-center">
+            <div class="col-6 col-md-3">
+                <div class="card glass-card p-4">
+                    <span class="fs-8 text-uppercase fw-semibold text-secondary">Total Processed</span>
+                    <h3 class="fw-bold mt-2 mb-0" th:text="${totalCount}">0</h3>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card glass-card p-4">
+                    <span class="fs-8 text-uppercase fw-semibold text-success">Sent (Success)</span>
+                    <h3 class="fw-bold mt-2 mb-0 text-success" th:text="${sentCount}">0</h3>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card glass-card p-4">
+                    <span class="fs-8 text-uppercase fw-semibold text-danger">Failed (Spam/Bounce)</span>
+                    <h3 class="fw-bold mt-2 mb-0 text-danger" th:text="${failedCount}">0</h3>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card glass-card p-4">
+                    <span class="fs-8 text-uppercase fw-semibold text-primary">Success Rate</span>
+                    <h3 class="fw-bold mt-2 mb-0 text-primary" th:text="${successRate} + '%'">0%</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Table Card -->
+        <div class="card glass-card p-4">
+            <h5 class="card-title fw-bold mb-4"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Global Outreach Activity Logs</h5>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="reportsLogsTable">
+                    <thead>
+                        <tr>
+                            <th>Recipient</th>
+                            <th>Subject</th>
+                            <th>Dispatch Timestamp</th>
+                            <th>Status</th>
+                            <th>Campaign</th>
+                            <th>SMTP Account</th>
+                            <th>Error message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="log : ${logs}">
+                            <td class="fw-medium" th:text="${log.recipient}">user@domain.com</td>
+                            <td th:text="${log.subject}">Subject preview...</td>
+                            <td th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}">2026-06-02 12:00</td>
+                            <td>
+                                <span class="badge rounded-pill" 
+                                      th:classappend="${log.status == 'SENT' ? 'badge-sent' : 'badge-failed'}" 
+                                      th:text="${log.status}">SENT</span>
+                            </td>
+                            <td th:text="${log.campaign != null ? log.campaign.campaignName : 'N/A'}">Q2 Pitch</td>
+                            <td th:text="${log.smtpAccount != null ? log.smtpAccount.name : 'N/A'}">Primary Gmail</td>
+                            <td class="text-danger fs-8" th:text="${log.errorMessage != null ? log.errorMessage : '-'}">-</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(logs)}">
+                            <td colspan="7" class="text-center text-secondary py-5">No activity log records found. Run a campaign to populate reports.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script th:inline="none">
+            $(document).ready(function() {
+                if ($('#reportsLogsTable tbody tr').length > 1 || ($('#reportsLogsTable tbody tr').length == 1 && !$('#reportsLogsTable tbody tr td').hasClass('text-center'))) {
+                    $('#reportsLogsTable').DataTable({
+                        paging: true,
+                        searching: true,
+                        ordering: true,
+                        info: true,
+                        order: [[2, 'desc']] // Sort by dispatch timestamp descending by default
+                    });
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

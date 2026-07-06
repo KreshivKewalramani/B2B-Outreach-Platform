@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, 'Excel Lead Import')}">
+<body>
+    <div class="content-body fade-in">
+        <div class="row g-4">
+            <!-- Upload Box -->
+            <div class="col-md-5">
+                <div class="card glass-card p-4 h-100">
+                    <h5 class="card-title fw-bold mb-3 text-primary"><i class="fa-solid fa-cloud-arrow-up me-2"></i>Upload Lead Sheet</h5>
+                    <p class="text-secondary fs-7 mb-4">Supported formats: <strong>.xlsx</strong> and <strong>.xls</strong>. Ensure the sheet has the required columns: <strong>Company Name</strong> and <strong>Email</strong>.</p>
+
+                    <form th:action="@{/companies/import}" method="post" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="excelFile" class="form-label fw-semibold">Choose Spreadsheet</label>
+                            <input class="form-control" type="file" id="excelFile" name="file" accept=".xlsx, .xls" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-primary-grad w-100 py-2 fs-6"><i class="fa-solid fa-play me-2"></i>Process Import</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Import Guidelines -->
+            <div class="col-md-7">
+                <div class="card glass-card p-4 h-100">
+                    <h5 class="card-title fw-bold mb-3"><i class="fa-solid fa-circle-info me-2 text-info"></i>Expected Sheet Columns</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm fs-7">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Header (Case-Insensitive)</th>
+                                    <th>Requirement</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Company Name</strong></td>
+                                    <td><span class="text-danger fw-bold">Required</span></td>
+                                    <td>Used in templates via {{company_name}}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email</strong></td>
+                                    <td><span class="text-danger fw-bold">Required</span></td>
+                                    <td>Target address. Must be a valid syntax. Checked for duplicates.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Contact Person</strong></td>
+                                    <td>Optional</td>
+                                    <td>Used in templates via {{contact_person}}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phone</strong></td>
+                                    <td>Optional</td>
+                                    <td>Used in templates via {{phone}}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Designation</strong></td>
+                                    <td>Optional</td>
+                                    <td>Used in templates via {{designation}}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Industry</strong></td>
+                                    <td>Optional</td>
+                                    <td>Used in templates via {{industry}} and campaigns filters.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import Summary & Log (Displayed after processing) -->
+            <div class="col-12" th:if="${importResult != null}">
+                <div class="card glass-card p-4 fade-in">
+                    <h5 class="card-title fw-bold mb-4 text-primary"><i class="fa-solid fa-list-check me-2"></i>Import Summary</h5>
+                    <div class="row g-4 mb-4 text-center">
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 border rounded-3 bg-success bg-opacity-10 text-success">
+                                <span class="fs-7 text-uppercase fw-semibold">Imported</span>
+                                <h3 class="fw-bold mt-1 mb-0" th:text="${importResult.imported}">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 border rounded-3 bg-secondary bg-opacity-10 text-secondary">
+                                <span class="fs-7 text-uppercase fw-semibold">Skipped Rows</span>
+                                <h3 class="fw-bold mt-1 mb-0" th:text="${importResult.skipped}">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 border rounded-3 bg-warning bg-opacity-10 text-warning">
+                                <span class="fs-7 text-uppercase fw-semibold">Duplicate Emails</span>
+                                <h3 class="fw-bold mt-1 mb-0" th:text="${importResult.duplicate}">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 border rounded-3 bg-danger bg-opacity-10 text-danger">
+                                <span class="fs-7 text-uppercase fw-semibold">Invalid / Corrupted</span>
+                                <h3 class="fw-bold mt-1 mb-0" th:text="${importResult.invalid}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-2">Import Processing Logs</h6>
+                    <div class="bg-dark text-white-50 p-3 rounded-3 font-monospace" style="max-height: 250px; overflow-y: auto; font-size: 0.8rem;">
+                        <div th:each="log : ${importResult.logs}" th:text="${log}">Log entry...</div>
+                        <div th:if="${#lists.isEmpty(importResult.logs)}" class="text-success text-center">Import executed cleanly without any warnings. All rows processed!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

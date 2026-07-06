@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, 'Campaign Scheduler')}">
+<body>
+    <div class="content-body fade-in">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <p class="text-secondary mb-0">Build, schedule, monitor, and run email outreach campaigns</p>
+            </div>
+            <a th:href="@{/campaigns/new}" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-plus me-2"></i>Create Campaign</a>
+        </div>
+
+        <!-- Campaigns Table -->
+        <div class="card glass-card p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="campaignsTable">
+                    <thead>
+                        <tr>
+                            <th>Campaign Name</th>
+                            <th>Template</th>
+                            <th>SMTP Account</th>
+                            <th>Target Scope</th>
+                            <th>Schedule Time</th>
+                            <th>Delay Between Emails</th>
+                            <th>Status</th>
+                            <th style="width: 200px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="campaign : ${campaigns}">
+                            <td>
+                                <strong class="text-primary fs-6" th:text="${campaign.campaignName}">Pitch A</strong>
+                                <span class="d-block text-secondary fs-8" th:text="'Created: ' + ${#temporals.format(campaign.createdDate, 'yyyy-MM-dd HH:mm')}">2026-06-02</span>
+                            </td>
+                            <td th:text="${campaign.template.templateName}">Partnership Pitch</td>
+                            <td th:text="${campaign.smtpAccount.name}">Primary Gmail</td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary" 
+                                      th:text="${#strings.equalsIgnoreCase(campaign.targetType, 'ALL') ? 'All Leads' : 'Industry: ' + campaign.targetValue}">All Leads</span>
+                            </td>
+                            <td th:text="${campaign.scheduleTime != null ? #temporals.format(campaign.scheduleTime, 'yyyy-MM-dd HH:mm') : 'Immediate'}">Immediate</td>
+                            <td th:text="${campaign.minDelaySeconds} + '-' + ${campaign.maxDelaySeconds} + ' sec'">15-45 sec</td>
+                            <td>
+                                <span class="badge rounded-pill" 
+                                      th:classappend="${campaign.status == 'COMPLETED' ? 'badge-sent' : (campaign.status == 'SENDING' ? 'bg-success' : (campaign.status == 'SCHEDULED' ? 'badge-pending' : (campaign.status == 'PAUSED' ? 'bg-warning text-dark' : 'badge-draft')))}" 
+                                      th:text="${campaign.status}">DRAFT</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <!-- Start / Run -->
+                                    <a th:href="@{/campaigns/start/{id}(id=${campaign.id})}" 
+                                       th:if="${campaign.status == 'DRAFT' || campaign.status == 'FAILED'}"
+                                       class="btn btn-sm btn-outline-success" title="Start Campaign"><i class="fa-solid fa-play"></i></a>
+                                    
+                                    <!-- Pause -->
+                                    <a th:href="@{/campaigns/pause/{id}(id=${campaign.id})}" 
+                                       th:if="${campaign.status == 'SENDING'}"
+                                       class="btn btn-sm btn-outline-warning" title="Pause Campaign"><i class="fa-solid fa-pause"></i></a>
+
+                                    <!-- Resume -->
+                                    <a th:href="@{/campaigns/resume/{id}(id=${campaign.id})}" 
+                                       th:if="${campaign.status == 'PAUSED'}"
+                                       class="btn btn-sm btn-outline-success" title="Resume Campaign"><i class="fa-solid fa-play"></i></a>
+
+                                    <!-- Progress Page -->
+                                    <a th:href="@{/campaigns/view/{id}(id=${campaign.id})}" 
+                                       th:if="${campaign.status == 'SENDING' || campaign.status == 'COMPLETED' || campaign.status == 'PAUSED'}"
+                                       class="btn btn-sm btn-outline-info" title="View Progress"><i class="fa-solid fa-chart-line"></i></a>
+
+                                    <a th:href="@{/campaigns/clone/{id}(id=${campaign.id})}" class="btn btn-sm btn-outline-secondary" title="Clone"><i class="fa-solid fa-clone"></i></a>
+                                    <a th:href="@{/campaigns/edit/{id}(id=${campaign.id})}" 
+                                       th:if="${campaign.status == 'DRAFT' || campaign.status == 'SCHEDULED'}"
+                                       class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
+                                    <a th:href="@{/campaigns/delete/{id}(id=${campaign.id})}" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this campaign? All recipient logs will be purged.');"><i class="fa-solid fa-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(campaigns)}">
+                            <td colspan="8" class="text-center text-secondary py-5">
+                                <i class="fa-solid fa-bullhorn fa-3x mb-3 text-secondary border-secondary opacity-50"></i>
+                                <p class="mb-0">No campaigns scheduled. Set up templates, select leads, and create your first campaign.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            $(document).ready(function() {
+                if ($('#campaignsTable tbody tr').length > 1 || ($('#campaignsTable tbody tr').length == 1 && !$('#campaignsTable tbody tr td').hasClass('text-center'))) {
+                    $('#campaignsTable').DataTable({
+                        paging: true,
+                        searching: true,
+                        ordering: true,
+                        info: true
+                    });
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

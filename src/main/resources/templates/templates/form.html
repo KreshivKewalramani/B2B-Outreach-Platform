@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, ${template.id != null} ? 'Edit Template' : 'Create Template')}">
+<body>
+    <div class="content-body fade-in">
+        <!-- Quill Editor CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+        
+        <style>
+            /* Custom styling for drag & drop zone */
+            #drop-zone {
+                border: 2px dashed rgba(79, 70, 229, 0.3) !important;
+                background-color: rgba(255, 255, 255, 0.02);
+                border-radius: 12px;
+                padding: 30px 20px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s ease-in-out;
+            }
+            #drop-zone:hover {
+                border-color: var(--primary-color) !important;
+                background-color: rgba(79, 70, 229, 0.05);
+            }
+            #drop-zone i {
+                transition: transform 0.2s;
+            }
+            #drop-zone:hover i {
+                transform: translateY(-3px);
+            }
+
+            /* Quill editor container default height constraint */
+            #editor-container {
+                min-height: 280px;
+                background-color: transparent;
+            }
+
+            /* Quill editor customization and dark mode compatibility */
+            .ql-editor {
+                min-height: 280px;
+                font-size: 0.95rem;
+                font-family: 'Inter', sans-serif;
+            }
+            .ql-toolbar.ql-snow, .ql-container.ql-snow {
+                border: 1px solid var(--card-border) !important;
+            }
+            .ql-toolbar.ql-snow {
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+            .ql-container.ql-snow {
+                border-bottom-left-radius: 8px;
+                border-bottom-right-radius: 8px;
+                background-color: transparent;
+            }
+
+            /* Dark mode style overrides for Quill */
+            [data-theme="dark"] .ql-toolbar.ql-snow {
+                background-color: #0f172a !important;
+                border-color: rgba(255, 255, 255, 0.08) !important;
+            }
+            [data-theme="dark"] .ql-container.ql-snow {
+                background-color: #1e293b !important;
+                border-color: rgba(255, 255, 255, 0.08) !important;
+                color: #f8fafc !important;
+            }
+            [data-theme="dark"] .ql-stroke {
+                stroke: #9ca3af !important;
+            }
+            [data-theme="dark"] .ql-fill {
+                fill: #9ca3af !important;
+            }
+            [data-theme="dark"] .ql-picker {
+                color: #9ca3af !important;
+            }
+            [data-theme="dark"] .ql-picker-options {
+                background-color: #0f172a !important;
+                color: #f8fafc !important;
+                border-color: rgba(255, 255, 255, 0.1) !important;
+            }
+        </style>
+
+        <div class="row g-4">
+            <!-- Form Card (Left Column) -->
+            <div class="col-lg-7">
+                <div class="card glass-card p-4 h-100">
+                    <h5 class="card-title fw-bold mb-4 text-primary">
+                        <i class="fa-solid fa-file-invoice me-2"></i>
+                        <span th:text="${template.id != null} ? 'Update Outreach Template' : 'Design Outreach Template'">Template Details</span>
+                    </h5>
+
+                    <form th:action="@{/templates/save}" th:object="${template}" method="post" enctype="multipart/form-data" id="templateForm">
+                        <input type="hidden" th:field="*{id}">
+                        
+                        <!-- Hidden input to bind Quill's HTML output to Spring Model -->
+                        <input type="hidden" id="body" name="body" th:field="*{body}">
+
+                        <div class="mb-3">
+                            <label for="templateName" class="form-label fw-semibold">Template Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="templateName" th:field="*{templateName}" placeholder="e.g. Sales Intro, Follow-up Pitch" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="subject" class="form-label fw-semibold">Subject Line <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="subject" th:field="*{subject}" placeholder="e.g. Partnership opportunity for {{company_name}}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label fw-semibold mb-0">Email Body <span class="text-danger">*</span></label>
+                                <span class="text-secondary fs-8"><span id="char-count">0</span> / 10000 characters</span>
+                            </div>
+                            
+                            <!-- Quill Editor Container -->
+                            <div id="editor-wrapper">
+                                <div id="editor-container"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Email Attachment (Optional)</label>
+                            
+                            <!-- Drag & Drop Zone -->
+                            <div id="drop-zone" class="mb-2">
+                                <i class="fa-solid fa-cloud-arrow-up fa-2x text-primary mb-2 d-block"></i>
+                                <span class="fw-semibold mb-1 fs-7 d-block">Drag & drop your attachment here or click to browse</span>
+                                <span class="text-secondary fs-8 d-block">Supports PDF, DOCX, XLSX, images etc. (Max 10MB)</span>
+                                <input type="file" class="d-none" id="attachmentFile" name="attachmentFile">
+                            </div>
+
+                            <!-- Selected File details display -->
+                            <div id="file-details" class="d-none align-items-center gap-3 p-3 bg-light rounded" style="background-color: var(--bg-color) !important; border: 1px solid var(--card-border);">
+                                <i class="fa-solid fa-paperclip text-primary fa-lg"></i>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span id="selected-file-name" class="fw-semibold text-secondary d-block fs-7 text-truncate">filename.pdf</span>
+                                    <span id="selected-file-size" class="text-secondary fs-8">1.2 MB</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="remove-file-btn">
+                                    <i class="fa-solid fa-trash"></i> Remove
+                                </button>
+                            </div>
+
+                            <!-- Existing File details if editing -->
+                            <div th:if="${template.attachmentName != null}" id="existing-file-details" class="d-flex align-items-center gap-3 mt-3 p-3 bg-light rounded" style="background-color: var(--bg-color) !important; border: 1px solid var(--card-border);">
+                                <i class="fa-solid fa-paperclip text-primary fa-lg"></i>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-semibold text-secondary d-block fs-7 text-truncate" th:text="${template.attachmentName}">filename.pdf</span>
+                                    <a th:href="@{/templates/download-attachment/{id}(id=${template.id})}" class="btn btn-sm btn-link p-0 text-decoration-none fs-8" target="_blank">
+                                        <i class="fa-solid fa-download me-1"></i>Download Existing File
+                                    </a>
+                                </div>
+                                <div class="form-check ms-auto">
+                                    <input class="form-check-input" type="checkbox" name="clearAttachment" id="clearAttachment" value="true">
+                                    <label class="form-check-label text-danger fw-semibold fs-8" for="clearAttachment">
+                                        Remove Existing
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-save me-2"></i>Save Template</button>
+                            <a th:href="@{/templates}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Previews & Guide (Right Column) -->
+            <div class="col-lg-5">
+                <!-- Live Preview Card -->
+                <div class="card glass-card p-4 mb-4">
+                    <div class="border-bottom pb-3 mb-3">
+                        <span class="badge bg-primary bg-opacity-10 text-primary mb-2">
+                            <i class="fa-solid fa-eye me-1"></i>Live Preview
+                        </span>
+                        <h5 class="fw-bold mb-0">Dynamic Outreach Preview</h5>
+                    </div>
+
+                    <!-- Email Mock Frame -->
+                    <div class="bg-light p-3 rounded-3 mb-3" style="background-color: var(--bg-color) !important; border: 1px solid var(--card-border);">
+                        <p class="mb-1 fs-8 text-secondary">
+                            <strong>From:</strong> &lt;active-smtp-account@domain.com&gt;
+                        </p>
+                        <p class="mb-1 fs-8 text-secondary">
+                            <strong>To:</strong> John Doe &lt;johndoe@acme.com&gt;
+                        </p>
+                        <p class="mb-0 fs-8 text-dark-50" style="color: var(--text-primary) !important;">
+                            <strong>Subject:</strong> <span id="preview-subject">Partnership opportunity for Acme Corp</span>
+                        </p>
+                        
+                        <!-- Attachment indicator -->
+                        <div id="preview-attachment-indicator" class="d-none align-items-center gap-1 mt-2 text-secondary fs-8 bg-white p-2 rounded border" style="background-color: var(--card-bg) !important; border-color: var(--card-border) !important;">
+                            <i class="fa-solid fa-paperclip text-primary"></i>
+                            <span class="fw-semibold text-truncate text-secondary" id="preview-attachment-name" style="max-width: 200px;">filename.pdf</span>
+                        </div>
+                    </div>
+
+                    <!-- Email Body Mock container -->
+                    <div class="border rounded-3 p-3 bg-white" style="min-height: 250px; max-height: 380px; overflow-y: auto; font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #334155;">
+                        <div id="preview-body">Start writing to see dynamic render...</div>
+                    </div>
+                </div>
+
+                <!-- Placeholders Guide Panel -->
+                <div class="card glass-card p-4">
+                    <h5 class="card-title fw-bold mb-3"><i class="fa-solid fa-circle-question text-info me-2"></i>Placeholders Guide</h5>
+                    <p class="text-secondary fs-7">Copy and paste these tags. They will resolve dynamically at transmission:</p>
+
+                    <div class="list-group list-group-flush fs-7 mt-2">
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <code class="fs-6 text-primary">{{company_name}}</code>
+                            <div class="text-secondary fs-8">Target organization name (Alias: <code>{{team}}</code>)</div>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <code class="fs-6 text-primary">{{contact_person}}</code>
+                            <div class="text-secondary fs-8">Recipient full name (Alias: <code>{{name}}</code>)</div>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <code class="fs-6 text-primary">{{email}}</code>
+                            <div class="text-secondary fs-8">Recipient email address</div>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <code class="fs-6 text-primary">{{designation}}</code>
+                            <div class="text-secondary fs-8">Job title / Role</div>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <code class="fs-6 text-primary">{{sender}}</code>
+                            <div class="text-secondary fs-8">Your account display name</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Quill Editor JS and Script Logic -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Initialize Quill Editor
+            var quill = new Quill('#editor-container', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        ['link', 'clean']
+                    ]
+                }
+            });
+
+            // Set initial content if editing
+            var bodyInput = document.getElementById('body');
+            var initialContent = bodyInput.value;
+            if (initialContent) {
+                quill.root.innerHTML = initialContent;
+            }
+
+            // Sync Quill contents back to hidden textarea on change
+            quill.on('text-change', function() {
+                var html = quill.root.innerHTML;
+                if (quill.getText().trim().length === 0) {
+                    html = "";
+                }
+                bodyInput.value = html;
+                updateLivePreview();
+                updateCharCounter();
+            });
+
+            // Real-time Live Preview & Character Counter
+            const previewSubject = document.getElementById('preview-subject');
+            const previewBody = document.getElementById('preview-body');
+            const subjectInput = document.getElementById('subject');
+            const charCountSpan = document.getElementById('char-count');
+
+            function updateCharCounter() {
+                const text = quill.getText().trim();
+                charCountSpan.innerText = text.length;
+                if (text.length > 10000) {
+                    charCountSpan.classList.add('text-danger');
+                } else {
+                    charCountSpan.classList.remove('text-danger');
+                }
+            }
+
+            function updateLivePreview() {
+                let subjectVal = subjectInput.value || 'Partnership opportunity for {{company_name}}';
+                previewSubject.innerText = resolveMockPlaceholders(subjectVal);
+
+                let bodyVal = quill.root.innerHTML;
+                if (quill.getText().trim().length === 0) {
+                    previewBody.innerHTML = '<span class="text-muted">Start writing to see dynamic render...</span>';
+                } else {
+                    previewBody.innerHTML = resolveMockPlaceholders(bodyVal);
+                }
+            }
+
+            function resolveMockPlaceholders(text) {
+                if (!text) return '';
+                return text
+                    .replace(/\{\{company_name\}\}/g, '<strong class="text-primary">Acme Corp</strong>')
+                    .replace(/\{\{contact_person\}\}/g, '<strong class="text-primary">John Doe</strong>')
+                    .replace(/\{\{email\}\}/g, '<strong class="text-primary">johndoe@acme.com</strong>')
+                    .replace(/\{\{designation\}\}/g, '<strong class="text-primary">Director of Operations</strong>')
+                    .replace(/\{\{industry\}\}/g, '<strong class="text-primary">Technology</strong>')
+                    .replace(/\{\{name\}\}/g, '<strong class="text-primary">John Doe</strong>')
+                    .replace(/\{\{team\}\}/g, '<strong class="text-primary">Acme Corp</strong>')
+                    .replace(/\{\{sender\}\}/g, '<strong class="text-primary">Kreshiv</strong>');
+            }
+
+            subjectInput.addEventListener('input', updateLivePreview);
+
+            // Drag & Drop File Attachment Logic
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('attachmentFile');
+            const fileDetails = document.getElementById('file-details');
+            const selectedFileName = document.getElementById('selected-file-name');
+            const selectedFileSize = document.getElementById('selected-file-size');
+            const removeFileBtn = document.getElementById('remove-file-btn');
+            const existingFileDetails = document.getElementById('existing-file-details');
+            const previewAttachmentIndicator = document.getElementById('preview-attachment-indicator');
+            const previewAttachmentName = document.getElementById('preview-attachment-name');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.backgroundColor = 'rgba(79, 70, 229, 0.06)';
+                dropZone.style.borderColor = 'var(--primary-color)';
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                dropZone.style.borderColor = 'rgba(79, 70, 229, 0.3)';
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                dropZone.style.borderColor = 'rgba(79, 70, 229, 0.3)';
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    updateFileDetails();
+                }
+            });
+
+            fileInput.addEventListener('change', updateFileDetails);
+
+            function updateFileDetails() {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    selectedFileName.innerText = file.name;
+                    selectedFileSize.innerText = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+                    fileDetails.classList.remove('d-none');
+                    fileDetails.classList.add('d-flex');
+
+                    previewAttachmentIndicator.classList.remove('d-none');
+                    previewAttachmentIndicator.classList.add('d-flex');
+                    previewAttachmentName.innerText = file.name;
+
+                    if (existingFileDetails) {
+                        existingFileDetails.style.display = 'none';
+                    }
+                } else {
+                    fileDetails.classList.remove('d-flex');
+                    fileDetails.classList.add('d-none');
+                    previewAttachmentIndicator.classList.remove('d-flex');
+                    previewAttachmentIndicator.classList.add('d-none');
+                }
+            }
+
+            removeFileBtn.addEventListener('click', () => {
+                fileInput.value = '';
+                updateFileDetails();
+                if (existingFileDetails) {
+                    existingFileDetails.style.display = 'flex';
+                }
+            });
+
+            // Initialize views
+            updateLivePreview();
+            updateCharCounter();
+        });
+    </script>
+    </div>
+</body>
+</html>

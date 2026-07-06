@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, ${company.id != null} ? 'Edit Lead' : 'Add New Lead')}">
+<body>
+    <div class="content-body fade-in">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card glass-card p-4">
+                    <h5 class="card-title fw-bold mb-4 text-primary">
+                        <i class="fa-solid fa-building me-2"></i>
+                        <span th:text="${company.id != null} ? 'Update Lead Details' : 'Register New Lead'">Lead Details</span>
+                    </h5>
+
+                    <form th:action="@{/companies/save}" th:object="${company}" method="post">
+                        <!-- Hidden ID for edits -->
+                        <input type="hidden" th:field="*{id}">
+                        <input type="hidden" th:field="*{dateAdded}">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="companyName" class="form-label fw-medium">Company Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="companyName" th:field="*{companyName}" placeholder="Enter company name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label fw-medium">Primary Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="email@domain.com" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="contactPerson" class="form-label fw-medium">Contact Person</label>
+                                <input type="text" class="form-control" id="contactPerson" th:field="*{contactPerson}" placeholder="Full name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phoneNumber" class="form-label fw-medium">Phone Number</label>
+                                <input type="text" class="form-control" id="phoneNumber" th:field="*{phoneNumber}" placeholder="Contact phone">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="designation" class="form-label fw-medium">Designation</label>
+                                <input type="text" class="form-control" id="designation" th:field="*{designation}" placeholder="e.g. Director, Manager">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="industry" class="form-label fw-medium">Industry</label>
+                                <input type="text" class="form-control" id="industry" th:field="*{industry}" placeholder="e.g. Technology, Finance">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-medium">Notes / Remarks</label>
+                            <textarea class="form-control" id="notes" th:field="*{notes}" rows="4" placeholder="Add custom notes, context or requirements..."></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-save me-2"></i>Save Lead</button>
+                            <a th:href="@{/companies}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

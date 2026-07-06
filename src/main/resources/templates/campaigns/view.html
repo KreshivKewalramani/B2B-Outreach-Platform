@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, 'Campaign Execution Progress')}">
+<body>
+    <div class="content-body fade-in">
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <a th:href="@{/campaigns}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left me-1"></i> Back to Campaigns</a>
+            </div>
+            <div class="d-flex gap-2">
+                <!-- Action Controls in detail view -->
+                <a th:href="@{/campaigns/pause/{id}(id=${campaign.id})}" th:if="${campaign.status == 'SENDING'}" class="btn btn-warning btn-sm"><i class="fa-solid fa-pause me-1"></i> Pause Campaign</a>
+                <a th:href="@{/campaigns/resume/{id}(id=${campaign.id})}" th:if="${campaign.status == 'PAUSED'}" class="btn btn-success btn-sm"><i class="fa-solid fa-play me-1"></i> Resume Campaign</a>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Campaign Details Panel -->
+            <div class="col-md-4">
+                <div class="card glass-card p-4 h-100">
+                    <h5 class="card-title fw-bold mb-3 text-primary"><i class="fa-solid fa-circle-info me-2"></i>Campaign Settings</h5>
+                    <div class="list-group list-group-flush fs-7">
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">Name</span>
+                            <span class="fw-semibold" th:text="${campaign.campaignName}">Pitch A</span>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">Email Template</span>
+                            <span class="fw-semibold" th:text="${campaign.template.templateName}">Follow Up Template</span>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">SMTP Routing Server</span>
+                            <span class="fw-semibold" th:text="${campaign.smtpAccount.name}">Primary Gmail</span>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">Targeting Scope</span>
+                            <span class="fw-semibold" th:text="${#strings.equalsIgnoreCase(campaign.targetType, 'ALL') ? 'All Leads' : 'Industry: ' + campaign.targetValue}">All Leads</span>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">Delay Range</span>
+                            <span class="fw-semibold" th:text="${campaign.minDelaySeconds} + '-' + ${campaign.maxDelaySeconds} + ' sec'">15-45 sec</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Progress Tracking -->
+            <div class="col-md-8">
+                <div class="card glass-card p-4 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title fw-bold mb-0">Sending Progress</h5>
+                            <span class="badge rounded-pill bg-primary" th:text="${campaign.status}">SENDING</span>
+                        </div>
+                        <p class="text-secondary fs-7">Personalizing and routing emails. Page will refresh automatically if active.</p>
+
+                        <!-- Progress Bar -->
+                        <div class="progress mt-4 mb-3" style="height: 12px;">
+                            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" 
+                                 th:style="'width: ' + ${progressPercent} + '%'" 
+                                 th:aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-secondary fs-8">
+                            <span>Completed: <span th:text="${progressPercent} + '%'">0%</span></span>
+                            <span>Total Emails: <span th:text="${totalCount}">0</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Statistics grid -->
+                    <div class="row g-2 text-center mt-3">
+                        <div class="col-4">
+                            <div class="p-3 border rounded-3 bg-success bg-opacity-10 text-success">
+                                <span class="fs-8 text-uppercase fw-semibold">Sent</span>
+                                <h4 class="fw-bold mt-1 mb-0" th:text="${sentCount}">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 border rounded-3 bg-danger bg-opacity-10 text-danger">
+                                <span class="fs-8 text-uppercase fw-semibold">Failed</span>
+                                <h4 class="fw-bold mt-1 mb-0" th:text="${failedCount}">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 border rounded-3 bg-warning bg-opacity-10 text-warning">
+                                <span class="fs-8 text-uppercase fw-semibold">Pending</span>
+                                <h4 class="fw-bold mt-1 mb-0" th:text="${pendingCount}">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipients Queue Detail -->
+        <div class="card glass-card p-4">
+            <h5 class="card-title fw-bold mb-4"><i class="fa-solid fa-list-ol me-2 text-primary"></i>Campaign Recipients Queue</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="recipientQueueTable">
+                    <thead>
+                        <tr>
+                            <th>Recipient Company</th>
+                            <th>Email Address</th>
+                            <th>Status</th>
+                            <th>Date Dispatched</th>
+                            <th>Error Logs / Retry Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="rec : ${recipients}">
+                            <td>
+                                <strong th:text="${rec.company.companyName}">Acme Corp</strong>
+                                <span class="d-block text-secondary fs-8" th:text="${rec.company.contactPerson}">John Doe</span>
+                            </td>
+                            <td>
+                                <a th:href="'mailto:' + ${rec.company.email}" class="text-decoration-none" th:text="${rec.company.email}">email@domain.com</a>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill" 
+                                      th:classappend="${rec.status == 'SENT' ? 'badge-sent' : (rec.status == 'FAILED' ? 'badge-failed' : 'badge-pending')}" 
+                                      th:text="${rec.status}">PENDING</span>
+                            </td>
+                            <td th:text="${rec.sentTimestamp != null ? #temporals.format(rec.sentTimestamp, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary fs-8 me-2" th:text="'Retries: ' + ${rec.retryCount}">Retries: 0</span>
+                                <span class="text-danger fs-8" th:text="${rec.errorMessage != null ? rec.errorMessage : '-'}">Error message details...</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(recipients)}">
+                            <td colspan="5" class="text-center text-secondary py-4">No recipients queued. Start the campaign to generate the recipient table.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Auto refresh during active sends -->
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            $(document).ready(function() {
+                if ($('#recipientQueueTable tbody tr').length > 1 || ($('#recipientQueueTable tbody tr').length == 1 && !$('#recipientQueueTable tbody tr td').hasClass('text-center'))) {
+                    $('#recipientQueueTable').DataTable({
+                        paging: true,
+                        searching: true,
+                        ordering: true,
+                        info: true
+                    });
+                }
+
+                // Auto-refresh page every 8 seconds if campaign status is SENDING
+                const campaignStatus = [[${campaign.status}]];
+                if (campaignStatus === 'SENDING') {
+                    setTimeout(function() {
+                        location.reload();
+                    }, 8000);
+                }
+            });
+            /*]]>*/
+        </script>
+    </div>
+</body>
+</html>

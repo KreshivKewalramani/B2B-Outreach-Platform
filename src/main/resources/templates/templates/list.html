@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, 'Email Templates')}">
+<body>
+    <div class="content-body fade-in">
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <p class="text-secondary mb-0">Create and customize templates using dynamic placeholders</p>
+            </div>
+            <a th:href="@{/templates/new}" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-plus me-2"></i>Create Template</a>
+        </div>
+
+        <!-- Grid layout of Templates -->
+        <div class="row g-4">
+            <div class="col-md-6 col-xl-4" th:each="template : ${templates}">
+                <div class="card glass-card h-100 d-flex flex-column justify-content-between p-4">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h5 class="fw-bold text-primary mb-0" th:text="${template.templateName}">Partnership Pitch</h5>
+                            <i class="fa-solid fa-file-invoice text-secondary opacity-25 fa-lg"></i>
+                        </div>
+                        <p class="mb-2 fs-7">
+                            <strong>Subject:</strong> <span class="text-dark-50" th:text="${template.subject}">Partnership opportunity</span>
+                        </p>
+                        <p class="text-secondary fs-8 mb-4" th:text="${template.body != null ? #strings.abbreviate(template.body.replaceAll('<[^>]*>', ' '), 120) : ''}">
+                            Email body preview text details...
+                        </p>
+
+                        <!-- Attachment badge if present -->
+                        <div th:if="${template.attachmentName != null}" class="mb-3 d-flex align-items-center gap-1 text-secondary fs-8 bg-light p-2 rounded" style="background-color: var(--bg-color) !important; border: 1px dashed var(--card-border); max-width: max-content;">
+                            <i class="fa-solid fa-paperclip text-primary"></i>
+                            <span class="fw-semibold text-truncate" style="max-width: 150px;" th:text="${template.attachmentName}">filename.pdf</span>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-3 border-secondary border-opacity-10 d-flex justify-content-between align-items-center">
+                        <span class="fs-8 text-secondary"><i class="fa-solid fa-code me-1 text-primary"></i> placeholders supported</span>
+                        <div class="btn-group">
+                            <a th:href="@{/templates/preview/{id}(id=${template.id})}" class="btn btn-outline-secondary btn-sm" title="Preview Render"><i class="fa-solid fa-eye"></i></a>
+                            <a th:href="@{/templates/duplicate/{id}(id=${template.id})}" class="btn btn-outline-info btn-sm" title="Duplicate"><i class="fa-solid fa-clone"></i></a>
+                            <a th:href="@{/templates/edit/{id}(id=${template.id})}" class="btn btn-outline-secondary btn-sm" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
+                            <a th:href="@{/templates/delete/{id}(id=${template.id})}" class="btn btn-outline-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this template?');"><i class="fa-solid fa-trash"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="col-12" th:if="${#lists.isEmpty(templates)}">
+                <div class="card glass-card p-5 text-center">
+                    <i class="fa-regular fa-file-code fa-4x mb-3 text-secondary border-secondary opacity-50"></i>
+                    <h5 class="fw-bold">No templates saved yet</h5>
+                    <p class="text-secondary">Templates store outreach drafts mapping client variables like company name or designation.</p>
+                    <div class="d-flex justify-content-center mt-3">
+                        <a th:href="@{/templates/new}" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-plus me-2"></i>Create First Template</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

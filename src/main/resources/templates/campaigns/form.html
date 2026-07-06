@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, ${campaign.id != null} ? 'Edit Campaign' : 'Create Campaign')}">
+<body>
+    <div class="content-body fade-in">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="card glass-card p-4">
+                    <h5 class="card-title fw-bold mb-4 text-primary">
+                        <i class="fa-solid fa-bullhorn me-2"></i>
+                        <span th:text="${campaign.id != null} ? 'Update Campaign Settings' : 'Schedule New Campaign'">Campaign Details</span>
+                    </h5>
+
+                    <form th:action="@{/campaigns/save}" th:object="${campaign}" method="post">
+                        <input type="hidden" th:field="*{id}">
+                        <input type="hidden" th:field="*{status}">
+
+                        <!-- Campaign Details -->
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="campaignName" class="form-label fw-semibold">Campaign Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="campaignName" th:field="*{campaignName}" placeholder="e.g. Q2 Sales Outreach, Software Pitch" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="template" class="form-label fw-semibold">Email Template <span class="text-danger">*</span></label>
+                                <select class="form-select" id="template" th:field="*{template}" required>
+                                    <option value="">-- Choose Template --</option>
+                                    <option th:each="t : ${templates}" th:value="${t.id}" th:text="${t.templateName}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="smtpAccount" class="form-label fw-semibold">SMTP Routing Account <span class="text-danger">*</span></label>
+                                <select class="form-select" id="smtpAccount" th:field="*{smtpAccount}" required>
+                                    <option value="">-- Choose SMTP Gateway --</option>
+                                    <option th:each="s : ${smtpAccounts}" th:value="${s.id}" th:text="${s.name} + ' (' + ${s.email} + ')'"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Targeting Scope -->
+                        <div class="card bg-light p-3 border-0 rounded-3 mb-4" style="background-color: var(--bg-color) !important;">
+                            <label class="form-label fw-bold"><i class="fa-solid fa-users-viewfinder me-2 text-primary"></i>Target Recipient Scope</label>
+                            
+                            <div class="row mt-2 g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="targetType" id="targetAll" value="ALL" th:field="*{targetType}">
+                                        <label class="form-check-label fw-medium" for="targetAll">Target All Leads</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="targetType" id="targetIndustry" value="INDUSTRY" th:field="*{targetType}">
+                                        <label class="form-check-label fw-medium" for="targetIndustry">Filter by Industry</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4" id="industryFilterBox">
+                                    <select class="form-select form-select-sm" th:field="*{targetValue}" id="targetValueSelect">
+                                        <option value="">-- Choose Industry --</option>
+                                        <option th:each="ind : ${industries}" th:value="${ind}" th:text="${ind}"></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scheduling & Delays -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="scheduleTime" class="form-label fw-semibold">Schedule Dispatch Time</label>
+                                <input type="datetime-local" class="form-control" id="scheduleTime" th:field="*{scheduleTime}">
+                                <span class="text-secondary fs-8 d-block mt-1">Leave blank to dispatch immediately upon start.</span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="delayDropdown" class="form-label fw-semibold">Anti-Spam Delay Interval</label>
+                                <select class="form-select" id="delayDropdown">
+                                    <option value="15-45">Random 15 - 45 Seconds (Default)</option>
+                                    <option value="10">10 Seconds</option>
+                                    <option value="20">20 Seconds</option>
+                                    <option value="30">30 Seconds</option>
+                                    <option value="60">60 Seconds</option>
+                                    <option value="custom">Custom Range...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Custom Delays Inputs -->
+                        <div class="row mb-4 bg-light p-3 border-0 rounded-3 g-3 d-none" id="customDelaysBox" style="background-color: var(--bg-color) !important;">
+                            <div class="col-md-6">
+                                <label for="minDelaySeconds" class="form-label fw-medium">Minimum Sleep (Seconds)</label>
+                                <input type="number" class="form-control form-control-sm" id="minDelaySeconds" th:field="*{minDelaySeconds}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="maxDelaySeconds" class="form-label fw-medium">Maximum Sleep (Seconds)</label>
+                                <input type="number" class="form-control form-control-sm" id="maxDelaySeconds" th:field="*{maxDelaySeconds}">
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-save me-2"></i>Schedule Campaign</button>
+                            <a th:href="@{/campaigns}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inline Toggler JS -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const targetAll = document.getElementById("targetAll");
+                const targetIndustry = document.getElementById("targetIndustry");
+                const industrySelect = document.getElementById("targetValueSelect");
+                const delayDropdown = document.getElementById("delayDropdown");
+                const customBox = document.getElementById("customDelaysBox");
+                const minDelayInput = document.getElementById("minDelaySeconds");
+                const maxDelayInput = document.getElementById("maxDelaySeconds");
+
+                // Toggle industry dropdown based on radio check
+                function toggleIndustryDropdown() {
+                    if (targetIndustry.checked) {
+                        industrySelect.disabled = false;
+                        industrySelect.required = true;
+                    } else {
+                        industrySelect.disabled = true;
+                        industrySelect.required = false;
+                        industrySelect.value = "";
+                    }
+                }
+
+                targetAll.addEventListener("change", toggleIndustryDropdown);
+                targetIndustry.addEventListener("change", toggleIndustryDropdown);
+                toggleIndustryDropdown(); // Initial check
+
+                // Toggle custom delay inputs
+                delayDropdown.addEventListener("change", function() {
+                    const val = this.value;
+                    if (val === "custom") {
+                        customBox.classList.remove("d-none");
+                    } else {
+                        customBox.classList.add("d-none");
+                        if (val === "15-45") {
+                            minDelayInput.value = 15;
+                            maxDelayInput.value = 45;
+                        } else {
+                            minDelayInput.value = parseInt(val);
+                            maxDelayInput.value = parseInt(val);
+                        }
+                    }
+                });
+
+                // Set dropdown selection on Edit
+                const min = parseInt(minDelayInput.value);
+                const max = parseInt(maxDelayInput.value);
+                if (min === 15 && max === 45) {
+                    delayDropdown.value = "15-45";
+                } else if (min === max && [10, 20, 30, 60].includes(min)) {
+                    delayDropdown.value = String(min);
+                } else {
+                    delayDropdown.value = "custom";
+                    customBox.classList.remove("d-none");
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

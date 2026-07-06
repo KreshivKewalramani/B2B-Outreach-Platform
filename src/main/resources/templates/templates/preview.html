@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, 'Template Preview')}">
+<body>
+    <div class="content-body fade-in">
+        <!-- Back Toolbar -->
+        <div class="mb-4">
+            <a th:href="@{/templates}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left me-1"></i> Back to Templates</a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Preview Box -->
+            <div class="col-lg-8">
+                <div class="card glass-card p-4">
+                    <div class="border-bottom pb-3 mb-4">
+                        <span class="badge bg-primary bg-opacity-10 text-primary mb-2">Live Render</span>
+                        <h4 class="fw-bold mb-0" th:text="${template.templateName}">Template Name</h4>
+                    </div>
+
+                    <!-- Email Headers Mock -->
+                    <div class="bg-light p-3 rounded-3 mb-4" style="background-color: var(--bg-color) !important;">
+                        <p class="mb-2 fs-7 text-secondary">
+                            <strong>From:</strong> &lt;active-smtp-account@domain.com&gt;
+                        </p>
+                        <p class="mb-2 fs-7 text-secondary">
+                            <strong>To:</strong> <span th:text="${company.contactPerson} + ' &lt;' + ${company.email} + '&gt;'">John Doe &lt;johndoe@domain.com&gt;</span>
+                        </p>
+                        <p class="mb-0 fs-7 text-dark-50" style="color: var(--text-primary) !important;">
+                            <strong>Subject:</strong> <span th:text="${previewSubject}">Partnership pitch</span>
+                        </p>
+                        <!-- Email Attachment Mock -->
+                        <div th:if="${template.attachmentName != null}" class="d-flex align-items-center gap-2 mt-3 p-2 bg-light rounded" style="background-color: var(--bg-color) !important; border: 1px dashed var(--card-border);">
+                            <i class="fa-solid fa-paperclip text-primary"></i>
+                            <span class="fw-semibold text-secondary fs-7" th:text="${template.attachmentName}">filename.pdf</span>
+                            <a th:href="@{/templates/download-attachment/{id}(id=${template.id})}" class="btn btn-sm btn-outline-primary py-0 px-2 ms-2 fs-8" target="_blank">
+                                <i class="fa-solid fa-download me-1"></i>Download Attachment
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Email Body Mock -->
+                    <div class="border rounded-3 p-4 bg-white" style="min-height: 250px; font-family: 'Inter', sans-serif;">
+                        <!-- Render with utext to support HTML/Rich text preview -->
+                        <div th:utext="${previewBody}">Dear John...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Context Lead Info Panel -->
+            <div class="col-lg-4">
+                <div class="card glass-card p-4">
+                    <h5 class="card-title fw-bold mb-3"><i class="fa-solid fa-circle-user text-primary me-2"></i>Preview Context Lead</h5>
+                    <p class="text-secondary fs-7 mb-4">The placeholders are filled using the following active lead details from your database:</p>
+
+                    <div class="list-group list-group-flush fs-7">
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">Company Name</span>
+                            <span class="fw-semibold" th:text="${company.companyName}">Acme Corp</span>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">Contact Person</span>
+                            <span class="fw-semibold" th:text="${company.contactPerson != null ? company.contactPerson : 'N/A'}">John Doe</span>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">Email</span>
+                            <span class="fw-semibold" th:text="${company.email}">johndoe@acme.com</span>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">Designation</span>
+                            <span class="fw-semibold" th:text="${company.designation != null ? company.designation : 'N/A'}">Director</span>
+                        </div>
+                        <div class="list-group-item bg-transparent px-0 py-2">
+                            <span class="text-secondary d-block fs-8">Industry</span>
+                            <span class="fw-semibold" th:text="${company.industry != null ? company.industry : 'N/A'}">Technology</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

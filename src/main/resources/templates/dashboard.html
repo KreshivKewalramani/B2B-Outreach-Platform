@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, 'Outreach Analytics Dashboard')}">
+<body>
+    <div class="content-body fade-in">
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-xl-3">
+                <div class="card glass-card p-4 d-flex flex-row align-items-center justify-content-between">
+                    <div>
+                        <span class="text-secondary fs-7 fw-medium text-uppercase">Total Leads</span>
+                        <h2 class="fw-bold mt-2 mb-0" th:text="${totalLeads}">1,248</h2>
+                    </div>
+                    <div class="rounded-3 p-3 bg-primary bg-opacity-10 text-primary">
+                        <i class="fa-solid fa-users fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="card glass-card p-4 d-flex flex-row align-items-center justify-content-between">
+                    <div>
+                        <span class="text-secondary fs-7 fw-medium text-uppercase">Campaigns</span>
+                        <h2 class="fw-bold mt-2 mb-0" th:text="${totalCampaigns}">12</h2>
+                    </div>
+                    <div class="rounded-3 p-3 bg-info bg-opacity-10 text-info">
+                        <i class="fa-solid fa-bullhorn fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="card glass-card p-4 d-flex flex-row align-items-center justify-content-between">
+                    <div>
+                        <span class="text-secondary fs-7 fw-medium text-uppercase">Emails Sent</span>
+                        <h2 class="fw-bold mt-2 mb-0 text-success" th:text="${sentCount}">943</h2>
+                    </div>
+                    <div class="rounded-3 p-3 bg-success bg-opacity-10 text-success">
+                        <i class="fa-solid fa-circle-check fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="card glass-card p-4 d-flex flex-row align-items-center justify-content-between">
+                    <div>
+                        <span class="text-secondary fs-7 fw-medium text-uppercase">Emails Failed</span>
+                        <h2 class="fw-bold mt-2 mb-0 text-danger" th:text="${failedCount}">34</h2>
+                    </div>
+                    <div class="rounded-3 p-3 bg-danger bg-opacity-10 text-danger">
+                        <i class="fa-solid fa-circle-xmark fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Delivery Performance Card -->
+            <div class="col-md-6 col-xl-3">
+                <div class="card glass-card p-4 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <span class="text-secondary fs-7 fw-medium text-uppercase">Success Rate</span>
+                        <h1 class="fw-bold mt-2 text-primary" th:text="${successRate} + '%'">96.5%</h1>
+                    </div>
+                    <div class="progress mt-3" style="height: 8px;">
+                        <div class="progress-bar bg-primary" role="progressbar" th:style="'width: ' + ${successRate} + '%'" aria-valuenow="96.5" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Active SMTP Details Card -->
+            <div class="col-md-6 col-xl-9">
+                <div class="card glass-card p-4 h-100 d-flex flex-row align-items-center">
+                    <div class="rounded-3 p-4 bg-warning bg-opacity-10 text-warning me-4">
+                        <i class="fa-solid fa-circle-nodes fa-2xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-secondary fs-7 fw-medium text-uppercase">Active SMTP Connection</span>
+                        <h4 class="fw-bold mt-1 text-dark" style="color: var(--text-primary) !important;" th:text="${activeSmtp}">smtp.gmail.com</h4>
+                        <p class="text-secondary mb-0 fs-7">Used as primary routing account for new outreach cycles.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4">
+                <div class="card glass-card p-4 h-100">
+                    <h5 class="card-title fw-bold mb-4">Delivery Ratios</h5>
+                    <div style="max-height: 250px; display: flex; justify-content: center; align-items: center;">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="card glass-card p-4 h-100">
+                    <h5 class="card-title fw-bold mb-4">Campaign Overview</h5>
+                    <div style="height: 250px;">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity History & Quick Links -->
+        <div class="row g-4">
+            <!-- Recent Logs -->
+            <div class="col-12">
+                <div class="card glass-card p-4">
+                    <h5 class="card-title fw-bold mb-4"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Recent Email Dispatches</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Recipient</th>
+                                    <th>Subject</th>
+                                    <th>Dispatch Date</th>
+                                    <th>Status</th>
+                                    <th>Routing SMTP</th>
+                                    <th>Error Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="log : ${recentLogs}">
+                                    <td class="fw-medium" th:text="${log.recipient}">recipient@domain.com</td>
+                                    <td th:text="${log.subject}">Subject text...</td>
+                                    <td th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}">2026-06-02 12:00</td>
+                                    <td>
+                                        <span class="badge rounded-pill" 
+                                              th:classappend="${log.status == 'SENT' ? 'badge-sent' : 'badge-failed'}" 
+                                              th:text="${log.status}">SENT</span>
+                                    </td>
+                                    <td th:text="${log.smtpAccount != null ? log.smtpAccount.name : 'N/A'}">Primary Gmail</td>
+                                    <td class="text-danger fs-8" th:text="${log.errorMessage != null ? log.errorMessage : '-'}">Error message...</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(recentLogs)}">
+                                    <td colspan="6" class="text-center text-secondary py-4">No recent dispatches logged. Start a campaign to track activity.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Injections -->
+        <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener("DOMContentLoaded", function() {
+            const sentCount = [[${sentCount}]];
+            const failedCount = [[${failedCount}]];
+
+            // 1. Doughnut Chart
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Sent', 'Failed'],
+                    datasets: [{
+                        data: [sentCount, failedCount],
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim()
+                            }
+                        }
+                    },
+                    cutout: '75%'
+                }
+            });
+
+            // 2. Campaigns Bar Chart
+            const campaignNames = [];
+            const campaignPendingCounts = [];
+            
+            /*[# th:each="c : ${campaigns}"]*/
+            campaignNames.push(/*[[${c.campaignName}]]*/);
+            campaignPendingCounts.push(/*[[${c.status}]]*/);
+            /*[/]*/
+
+            // Build dynamic numeric statuses values for visualization
+            const counts = campaignNames.map((n, idx) => {
+                const stat = campaignPendingCounts[idx];
+                if (stat === 'COMPLETED') return 100;
+                if (stat === 'SENDING') return 50;
+                if (stat === 'SCHEDULED') return 25;
+                return 10; // DRAFT / PAUSED
+            });
+
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: campaignNames,
+                    datasets: [{
+                        label: 'Campaign Status Level (%)',
+                        data: counts,
+                        backgroundColor: '#4f46e5',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim()
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim()
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        });
+        /*]]>*/
+        </script>
+    </div>
+</body>
+</html>

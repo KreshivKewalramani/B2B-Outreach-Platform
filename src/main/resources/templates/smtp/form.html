@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::div.content-body}, ${account.id != null} ? 'Edit SMTP' : 'Add SMTP Account')}">
+<body>
+    <div class="content-body fade-in">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card glass-card p-4">
+                    <h5 class="card-title fw-bold mb-4 text-primary">
+                        <i class="fa-solid fa-server me-2"></i>
+                        <span th:text="${account.id != null} ? 'Update SMTP Configurations' : 'Register SMTP Gateway'">SMTP Configurations</span>
+                    </h5>
+
+                    <form th:action="@{/smtp/save}" th:object="${account}" method="post">
+                        <!-- Hidden ID -->
+                        <input type="hidden" id="id" th:field="*{id}">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label fw-semibold">Account Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" th:field="*{name}" placeholder="e.g. Personal Gmail, Zoho Business" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label fw-semibold">Sender Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="sender@domain.com" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="host" class="form-label fw-semibold">SMTP Host <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="host" th:field="*{host}" placeholder="e.g. smtp.gmail.com" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="port" class="form-label fw-semibold">SMTP Port <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="port" th:field="*{port}" placeholder="e.g. 587, 465" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" th:field="*{username}" placeholder="SMTP Username" required>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="password" class="form-label fw-semibold">
+                                    App Password / Token 
+                                    <span th:if="${account.id != null}" class="text-secondary fw-normal fs-8">(Leave blank to keep current)</span>
+                                    <span th:if="${account.id == null}" class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="App password" th:required="${account.id == null}">
+                            </div>
+                        </div>
+
+                        <!-- Encryption Options -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="tls" th:field="*{tls}">
+                                    <label class="form-check-label fw-semibold" for="tls">STARTTLS</label>
+                                </div>
+                                <span class="text-secondary fs-8 d-block mt-1">Commonly used for port 587</span>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="ssl" th:field="*{ssl}">
+                                    <label class="form-check-label fw-semibold" for="ssl">SSL/TLS</label>
+                                </div>
+                                <span class="text-secondary fs-8 d-block mt-1">Commonly used for port 465</span>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="active" th:field="*{active}">
+                                    <label class="form-check-label fw-semibold text-primary" for="active">Active Routing</label>
+                                </div>
+                                <span class="text-secondary fs-8 d-block mt-1">Set as sender gateway</span>
+                            </div>
+                        </div>
+
+                        <!-- Save & Test buttons -->
+                        <div class="d-flex justify-content-between border-top pt-3 border-secondary border-opacity-10">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-primary-grad"><i class="fa-solid fa-save me-2"></i>Save Account</button>
+                                <a th:href="@{/smtp}" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-outline-info" id="btnTestSmtp"><i class="fa-solid fa-circle-nodes me-2"></i>Test Connection</button>
+                            </div>
+                        </div>
+                        <div id="smtpTestStatus" class="mt-2 text-info"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
