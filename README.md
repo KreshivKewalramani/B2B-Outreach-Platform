@@ -84,8 +84,6 @@ Open your terminal in the project `/demo` root directory and run:
 ```powershell
 mvn spring-boot:run
 ```
-Access the application dashboard at **http://localhost:8080**.
-
 ---
 
 ## 🔑 Pre-Seeded Accounts (Seeded automatically on boot)
