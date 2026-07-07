@@ -1,6 +1,6 @@
-# 🚀 Outreach - Email Outreach & Automation Platform
+# 🚀 B2B Outreach Platform - Email Outreach & Automation Platform
 
-Outreach is a production-ready, secure, and modern **Bulk Email Outreach & Automation Platform** built on the Spring Boot stack. It empowers users to manage company leads, draft templates using rich styling, configure custom SMTP gateways, and run scheduled background email campaigns with robust anti-spam throttling.
+The B2B Outreach Platfrom is a production-ready, secure, and modern **Bulk Email Outreach & Automation Platform** built on the Spring Boot stack. It empowers users to manage company leads, draft templates using rich styling, configure custom SMTP gateways, and run scheduled background email campaigns with robust anti-spam throttling.
 
 ---
 
